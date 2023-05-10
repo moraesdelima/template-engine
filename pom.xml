@@ -34,6 +34,13 @@
         <url>http://github.com/moraesdelima/template-engine/tree/main</url>
     </scm>
 
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/moraesdelima/template-engine</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <!-- Explicitly declaring the source encoding eliminates the following 
