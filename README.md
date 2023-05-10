@@ -1,3 +1,136 @@
-# template-engine
 
-TemplateEngine provides classes and methods for replacing properties in a given template with their respective values from a Java Bean object, either in string or JSON format.
+# Template Engine
+
+This project provides a Java library for replacing properties in a given template with their respective values from a Java Bean object, either in string or JSON format.
+
+## Usage
+
+To use this library, include the following dependency in your Maven project:
+
+```xml
+<dependency>
+    <groupId>com.moraesdelima</groupId>
+    <artifactId>template-engine</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+Then, you can use the `TemplateEngine` class to replace properties in a template. Here is an example of how to use it with a String Serialization, that convert primitive values to your's String representation:
+
+```java
+@Data
+@AllArgsConstructor
+class MyBean {
+    private String name;
+}
+
+TemplateEngine engine = new TemplateEngine();
+String template = "Hello, ${name}!";
+MyBean bean = new MyBean("John");
+String result = engine.process(template, bean);
+System.out.println(result);
+```
+
+The output of this code would be:
+
+```bash
+Hello, John!
+```
+
+You can use the `TemplateEngine` class to replace properties in a template either with a String Serialization or Json Serialization. Here is an example of how to use it with a Json Serialization, that convert any object to your's Json representation:
+
+```java
+@Data
+@AllArgsConstructor
+class MyBean {
+    private String name;
+}
+
+TemplateEngine engine = new TemplateEngine();
+String template = "Hello, ${name}!";
+MyBean bean = new MyBean("John");
+String result = engine.process(template, bean, JSON_SERIALIZATION);
+System.out.println(result);
+```
+
+The output of this code would be:
+
+```bash
+Hello, "John"!
+```
+
+Note that the name property is replaced with your Json equivalent "John" (enclosing by double quotes) and not with your String representation John (without double quotes). you can also use the following to serialize an entity like this
+
+```java
+@Data
+@AllArgsConstructor
+class User {
+    private String name;
+}
+@Data
+@AllArgsConstructor
+class MyBean {
+    private User user;
+}
+
+TemplateEngine engine = new TemplateEngine();
+String template = "{ \"user\": ${user} }";
+MyBean bean = new MyBean(new User("John"));
+String result = engine.process(template, bean, JSON_SERIALIZATION);
+System.out.println(result);
+```
+
+The output of this code would be:
+
+```json
+{ "user": {"name":"John"} }
+```
+
+## Building from source
+
+To build this project from source, you will need:
+
+- JDK 11 or later
+- Apache Maven 3.x
+
+To build the project, run the following command from the project root directory:
+
+```bash
+mvn package
+```
+
+This will create a JAR file in the `target` directory.
+
+To install this project as a dependency in another project's pom.xml, you can add the following XML snippet to the <dependencies> section:
+
+```xml
+<dependency>
+    <groupId>com.moraesdelima</groupId>
+    <artifactId>template-engine</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+Make sure to replace the version number with the version of the project you want to use.
+
+Additionally, since this project is hosted on GitHub Packages, you will need to configure your Maven settings to authenticate with GitHub Packages in order to download the dependency. You can add the following XML snippet to your Maven settings.xml file, located at ~/.m2/settings.xml:
+
+```xml
+<servers>
+    <server>
+        <id>github</id>
+        <username>YOUR_GITHUB_USERNAME</username>
+        <password>YOUR_GITHUB_ACCESS_TOKEN</password>
+    </server>
+</servers>
+```
+
+Replace YOUR_GITHUB_USERNAME with your GitHub username, and YOUR_GITHUB_ACCESS_TOKEN with a personal access token with the read:packages scope, which you can generate in your GitHub account settings.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Authors
+
+This project was created by Luiz Moraes de Lima Neto. You can contact me at <moraesdelima@gmail.com>.

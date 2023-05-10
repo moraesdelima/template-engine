@@ -18,9 +18,12 @@ public class TemplateEngineTest {
     private static Cliente cliente;
     private static Endereco endereco;
     private static TestBean testBean;
+    private static TemplateEngine engine;
 
     @Before
     public void setUp() {
+        engine = new TemplateEngine();
+
         cliente = new Cliente();
         cliente.setNome("João");
         cliente.setIdade(32);
@@ -38,6 +41,7 @@ public class TemplateEngineTest {
 
     @After
     public void tearDown() {
+        engine = null;
         testBean = null;
         endereco = null;
         cliente = null;
@@ -45,7 +49,7 @@ public class TemplateEngineTest {
 
     private void testReplaceProperties(String template, String expectedResult, int serializationType) {
         try {
-            String result = TemplateEngine.replaceProperties(template, testBean, serializationType);
+            String result = engine.process(template, testBean, serializationType);
             assertEquals(expectedResult, result);
         } catch (Exception anException) {
             fail("Expected to not be thrown any exceptios");
@@ -56,7 +60,7 @@ public class TemplateEngineTest {
             String template, String expectedResult, int serializationType,
             Class<T> exceptionClass) {
         try {
-            TemplateEngine.replaceProperties(template, testBean, serializationType);
+            engine.process(template, testBean, serializationType);
             fail("Expected an " + exceptionClass.getSimpleName() + " to be thrown");
         } catch (Exception anException) {
             assertEquals(anException.getClass(), exceptionClass);

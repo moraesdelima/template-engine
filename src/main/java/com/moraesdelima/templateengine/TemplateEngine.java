@@ -10,6 +10,9 @@ import java.util.regex.Pattern;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
 /**
  * The TemplateEngine class provides methods for replacing properties in a given
  * template with their respective values
@@ -23,13 +26,9 @@ public class TemplateEngine {
     public static final int JSON_SERIALIZATION = 1;
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * This constructor is private and throws an IllegalStateException if called,
-     * because TemplateEngine is a utility class and should not be instantiated.
-     */
-    private TemplateEngine() {
-        throw new IllegalStateException(
-                "TemplateEngine is a utility class and should not be instantiated.");
+    public String process(String template, Object bean)
+            throws GetPropertyException, SerializePropertyException {
+        return process(template, bean, STRING_SERIALIZATION);
     }
 
     /**
@@ -48,7 +47,7 @@ public class TemplateEngine {
      * @throws SerializePropertyException if an error occurs during serialization of
      *                                    a property value
      */
-    public static String replaceProperties(
+    public String process(
             String template, Object bean, int serializationType)
             throws GetPropertyException, SerializePropertyException {
         Pattern pattern = Pattern.compile("\\$\\{([^}]+)\\}");
@@ -79,7 +78,7 @@ public class TemplateEngine {
      * @throws SerializePropertyException if an error occurs during serialization of
      *                                    the property value
      */
-    private static String serializeProperty(
+    private String serializeProperty(
             Object bean, String property, int serializationType)
             throws GetPropertyException, SerializePropertyException {
         Object propertyValue = getPropertyValue(bean, property);
@@ -126,7 +125,7 @@ public class TemplateEngine {
      * @throws GetPropertyException if the value of the property cannot be obtained
      *                              from the Java Bean object
      */
-    private static Object getPropertyValue(Object bean, String name)
+    private Object getPropertyValue(Object bean, String name)
             throws GetPropertyException {
 
         Object value = bean;
@@ -153,6 +152,27 @@ public class TemplateEngine {
         }
 
         return value;
+    }
+
+    public static void main(String[] args) throws GetPropertyException, SerializePropertyException {
+
+        @Data
+        @AllArgsConstructor
+        class User {
+            private String name;
+        }
+        @Data
+        @AllArgsConstructor
+        class MyBean {
+            private User user;
+        }
+
+        TemplateEngine engine = new TemplateEngine();
+        String template = "{ \"user\": ${user} }";
+        MyBean bean = new MyBean(new User("John"));
+        String result = engine.process(template, bean, JSON_SERIALIZATION);
+        System.out.println(result);
+
     }
 
 }
