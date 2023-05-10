@@ -7,8 +7,7 @@ import java.lang.reflect.Method;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,7 +23,7 @@ public class TemplateEngine {
 
     public static final int STRING_SERIALIZATION = 0;
     public static final int JSON_SERIALIZATION = 1;
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    Gson gson = new Gson();
 
     public String process(String template, Object bean)
             throws GetPropertyException, SerializePropertyException {
@@ -84,11 +83,11 @@ public class TemplateEngine {
         Object propertyValue = getPropertyValue(bean, property);
 
         String serializedProperty = null;
-        try {
-            serializedProperty = objectMapper.writeValueAsString(propertyValue);
-        } catch (JsonProcessingException e) {
-            throw new SerializePropertyException(property, bean.getClass(), e);
-        }
+        // try {
+        serializedProperty = gson.toJson(propertyValue);
+        // } catch (JsonProcessingException e) {
+        // throw new SerializePropertyException(property, bean.getClass(), e);
+        // }
 
         if (serializationType == JSON_SERIALIZATION) {
             return serializedProperty;
