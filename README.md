@@ -114,6 +114,21 @@ mvn package
 
 This will create a JAR file in the `target` directory.
 
+Para referenciar as dependências que precisam de atenção, você pode adicionar uma seção na documentação do projeto. Por exemplo:
+
+## Dependências
+
+O projeto utiliza as seguintes dependências:
+
+| Dependência | Versão | Escopo | Observação |
+|-------------|--------|--------|------------|
+| org.projectlombok:lombok | 1.18.26 | provided | A dependência é utilizada apenas durante a compilação e não deve ser incluída no pacote final. |
+| com.google.code.gson:gson | 2.10.1 | compile | A dependência é utilizada apenas para converter objetos em formato JSON e deve ser incluída no pacote final. |
+| junit:junit | 4.13.2 | test | A dependência é utilizada apenas durante os testes unitários. |
+| org.junit.jupiter:junit-jupiter-api | 5.7.2 | test | A dependência é utilizada apenas durante os testes unitários. |
+| org.mockito:mockito-core | 4.2.0 | test | A dependência é utilizada apenas durante os testes unitários. |
+| org.mockito:mockito-junit-jupiter | 4.2.0 | test | A dependência é utilizada apenas durante os testes unitários. |
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
