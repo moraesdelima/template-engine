@@ -15,7 +15,7 @@ To use this library, include the following dependency in your Maven project:
 </dependency>
 ```
 
-Additionally, since this project is hosted on GitHub Packages, you will need to configure your Maven settings to authenticate with GitHub Packages to download the dependency. You can add the following XML snippet to your Maven settings.xml file, located at ~/.m2/settings.xml:
+<!-- Additionally, since this project is hosted on GitHub Packages, you will need to configure your Maven settings to authenticate with GitHub Packages to download the dependency. You can add the following XML snippet to your Maven settings.xml file, located at ~/.m2/settings.xml:
 
 ```xml
 <servers>
@@ -25,7 +25,7 @@ Additionally, since this project is hosted on GitHub Packages, you will need to 
         <password>YOUR_GITHUB_ACCESS_TOKEN</password>
     </server>
 </servers>
-```
+``` -->
 
 Replace YOUR_GITHUB_USERNAME with your GitHub username, and YOUR_GITHUB_ACCESS_TOKEN with a personal access token with the read:packages scope, which you can generate in your GitHub account settings.
 
