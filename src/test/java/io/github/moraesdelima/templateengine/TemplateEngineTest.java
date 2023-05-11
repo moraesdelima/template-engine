@@ -15,10 +15,10 @@ import lombok.Data;
 
 public class TemplateEngineTest {
 
-    private static Cliente cliente;
-    private static Endereco endereco;
-    private static TestBean testBean;
-    private static TemplateEngine engine;
+    private Cliente cliente;
+    private Endereco endereco;
+    private TestBean testBean;
+    private TemplateEngine engine;
 
     @Before
     public void setUp() {

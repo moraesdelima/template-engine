@@ -14,7 +14,8 @@ To use this library, include the following dependency in your Maven project:
     <version>1.0.0</version>
 </dependency>
 ```
-Additionally, since this project is hosted on GitHub Packages, you will need to configure your Maven settings to authenticate with GitHub Packages in order to download the dependency. You can add the following XML snippet to your Maven settings.xml file, located at ~/.m2/settings.xml:
+
+Additionally, since this project is hosted on GitHub Packages, you will need to configure your Maven settings to authenticate with GitHub Packages to download the dependency. You can add the following XML snippet to your Maven settings.xml file, located at ~/.m2/settings.xml:
 
 ```xml
 <servers>
@@ -28,7 +29,7 @@ Additionally, since this project is hosted on GitHub Packages, you will need to 
 
 Replace YOUR_GITHUB_USERNAME with your GitHub username, and YOUR_GITHUB_ACCESS_TOKEN with a personal access token with the read:packages scope, which you can generate in your GitHub account settings.
 
-Then, you can use the `TemplateEngine` class to replace properties in a template. Here is an example of how to use it with a String Serialization, that convert primitive values to your's String representation:
+Then, you can use the `TemplateEngine` class to replace properties in a template. Here is an example of how to use it with a String Serialization, that converts primitive values to your's String representation:
 
 ```java
 @Data
@@ -50,7 +51,7 @@ The output of this code would be:
 Hello, John!
 ```
 
-You can use the `TemplateEngine` class to replace properties in a template either with a String Serialization or Json Serialization. Here is an example of how to use it with a Json Serialization, that convert any object to your's Json representation:
+You can use the `TemplateEngine` class to replace properties in a template either with a String Serialization or JSON Serialization. Here is an example of how to use it with JSON Serialization, which converts any object to your's JSON representation:
 
 ```java
 @Data
