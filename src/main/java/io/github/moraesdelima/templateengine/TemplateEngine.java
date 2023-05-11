@@ -1,4 +1,4 @@
-package com.moraesdelima.templateengine;
+package io.github.moraesdelima.templateengine;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;

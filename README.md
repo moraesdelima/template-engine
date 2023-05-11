@@ -9,7 +9,7 @@ To use this library, include the following dependency in your Maven project:
 
 ```xml
 <dependency>
-    <groupId>com.moraesdelima</groupId>
+    <groupId>io.github.moraesdelima</groupId>
     <artifactId>template-engine</artifactId>
     <version>1.0.0</version>
 </dependency>

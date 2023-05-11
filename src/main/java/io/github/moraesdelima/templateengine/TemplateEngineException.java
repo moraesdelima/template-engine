@@ -1,4 +1,4 @@
-package com.moraesdelima.templateengine;
+package io.github.moraesdelima.templateengine;
 
 public class TemplateEngineException extends Exception {
 

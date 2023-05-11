@@ -1,4 +1,4 @@
-package com.moraesdelima.templateengine;
+package io.github.moraesdelima.templateengine;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -128,7 +128,8 @@ public class TemplateEngineTest {
     public void test_replacing_an_object_property_with_TemplateEngine_STRING_SERIALIZATION_serialization_Type() {
         testReplacePropertiesThrowsAnException(
                 "{ \"cliente\": ${cliente} }",
-                "Can't serialize property cliente from class com.moraesdelima.templateengine.TemplateEngineTest$TestBean witch TemplateEngine.STRING_SERIALIZATION",
+                "Can't serialize property cliente from class " + TestBean.class.getCanonicalName()
+                        + " witch TemplateEngine.STRING_SERIALIZATION",
                 TemplateEngine.STRING_SERIALIZATION,
                 SerializePropertyException.class);
 
@@ -146,7 +147,8 @@ public class TemplateEngineTest {
     public void test_replacing_an_array_property_with_TemplateEngine_STRING_SERIALIZATION_serialization_Type() {
         testReplacePropertiesThrowsAnException(
                 "{ \"lista\": ${lista} }",
-                "Can't serialize property lista from class com.moraesdelima.templateengine.TemplateEngineTest$TestBean witch TemplateEngine.STRING_SERIALIZATION",
+                "Can't serialize property lista from class " + TestBean.class.getCanonicalName()
+                        + " witch TemplateEngine.STRING_SERIALIZATION",
                 TemplateEngine.STRING_SERIALIZATION,
                 SerializePropertyException.class);
     }
@@ -173,7 +175,7 @@ public class TemplateEngineTest {
     public void test_replacing_a_non_existent_property_with_TemplateEngine_JSON_SERIALIZATION_serialization_Type() {
         testReplacePropertiesThrowsAnException(
                 "This property doesn't exist: ${nonExistentProperty}",
-                "Can't get property nonExistentProperty from class com.moraesdelima.templateengine.TemplateEngineTest$TestBean",
+                "Can't get property nonExistentProperty from class " + TestBean.class.getCanonicalName(),
                 TemplateEngine.JSON_SERIALIZATION,
                 GetPropertyException.class);
     }
@@ -182,7 +184,7 @@ public class TemplateEngineTest {
     public void test_replacing_a_non_existent_property_with_TemplateEngine_STRING_SERIALIZATION_serialization_Type() {
         testReplacePropertiesThrowsAnException(
                 "This property doesn't exist: ${nonExistentProperty}",
-                "Can't get property nonExistentProperty from class com.moraesdelima.templateengine.TemplateEngineTest$TestBean",
+                "Can't get property nonExistentProperty from class " + TestBean.class.getCanonicalName(),
                 TemplateEngine.STRING_SERIALIZATION,
                 GetPropertyException.class);
     }
