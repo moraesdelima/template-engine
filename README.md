@@ -33,7 +33,7 @@ To use the library, you first need to include the `template-engine` dependency i
 <dependency>
     <groupId>io.github.moraesdelima</groupId>
     <artifactId>template-engine</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
