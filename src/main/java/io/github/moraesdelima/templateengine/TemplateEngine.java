@@ -154,24 +154,17 @@ public class TemplateEngine {
     }
 
     public static void main(String[] args) throws GetPropertyException, SerializePropertyException {
-
-        @Data
-        @AllArgsConstructor
-        class User {
-            private String name;
-        }
         @Data
         @AllArgsConstructor
         class MyBean {
-            private User user;
+            private String name;
         }
 
         TemplateEngine engine = new TemplateEngine();
-        String template = "{ \"user\": ${user} }";
-        MyBean bean = new MyBean(new User("John"));
+        String template = "Hello, ${name}!";
+        MyBean bean = new MyBean("John");
         String result = engine.process(template, bean, JSON_SERIALIZATION);
         System.out.println(result);
-
     }
 
 }
