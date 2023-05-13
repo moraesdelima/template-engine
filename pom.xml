@@ -6,7 +6,7 @@
 
     <groupId>io.github.moraesdelima</groupId>
     <artifactId>template-engine</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.1</version>
     <packaging>jar</packaging>
 
     <name>template-engine</name>
