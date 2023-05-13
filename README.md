@@ -20,10 +20,12 @@ Then, you can use the `TemplateEngine` class to replace properties in a template
 ```java
 @Data
 @AllArgsConstructor
-class MyBean {
+public class MyBean {
     private String name;
 }
+```
 
+```java
 TemplateEngine engine = new TemplateEngine();
 String template = "Hello, ${name}!";
 MyBean bean = new MyBean("John");
