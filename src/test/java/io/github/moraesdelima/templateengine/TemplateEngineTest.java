@@ -57,14 +57,34 @@ public class TemplateEngineTest {
     }
 
     private <T extends Exception> void testReplacePropertiesThrowsAnException(
-            String template, String expectedResult, int serializationType,
+            String template,
+            String failedProperty,
+            Class<?> failedClass,
+            int serializationType,
             Class<T> exceptionClass) {
+
         try {
             engine.process(template, testBean, serializationType);
             fail("Expected an " + exceptionClass.getSimpleName() + " to be thrown");
         } catch (Exception anException) {
-            assertEquals(anException.getClass(), exceptionClass);
-            assertThat(anException.getMessage(), is(expectedResult));
+            assertEquals(exceptionClass, anException.getClass());
+
+            if (anException instanceof GetPropertyException) {
+                String expectedResult = "Can't get property " + failedProperty + " from class "
+                        + failedClass.getCanonicalName();
+                assertThat(anException.getMessage(), is(expectedResult));
+                assertEquals(failedProperty, ((GetPropertyException) anException).getProperty());
+                assertEquals(failedClass, ((GetPropertyException) anException).getBeanClass());
+            }
+
+            if (anException instanceof SerializePropertyException) {
+                String expectedResult = "Can't serialize property " + failedProperty + " from class "
+                        + failedClass.getCanonicalName() + " witch TemplateEngine.STRING_SERIALIZATION";
+                assertThat(anException.getMessage(), is(expectedResult));
+                assertEquals(failedProperty, ((SerializePropertyException) anException).getProperty());
+                assertEquals(failedClass, ((SerializePropertyException) anException).getBeanClass());
+            }
+
         }
     }
 
@@ -128,8 +148,7 @@ public class TemplateEngineTest {
     public void test_replacing_an_object_property_with_TemplateEngine_STRING_SERIALIZATION_serialization_Type() {
         testReplacePropertiesThrowsAnException(
                 "{ \"cliente\": ${cliente} }",
-                "Can't serialize property cliente from class " + TestBean.class.getCanonicalName()
-                        + " witch TemplateEngine.STRING_SERIALIZATION",
+                "cliente", TestBean.class,
                 TemplateEngine.STRING_SERIALIZATION,
                 SerializePropertyException.class);
 
@@ -147,8 +166,7 @@ public class TemplateEngineTest {
     public void test_replacing_an_array_property_with_TemplateEngine_STRING_SERIALIZATION_serialization_Type() {
         testReplacePropertiesThrowsAnException(
                 "{ \"lista\": ${lista} }",
-                "Can't serialize property lista from class " + TestBean.class.getCanonicalName()
-                        + " witch TemplateEngine.STRING_SERIALIZATION",
+                "lista", TestBean.class,
                 TemplateEngine.STRING_SERIALIZATION,
                 SerializePropertyException.class);
     }
@@ -175,7 +193,7 @@ public class TemplateEngineTest {
     public void test_replacing_a_non_existent_property_with_TemplateEngine_JSON_SERIALIZATION_serialization_Type() {
         testReplacePropertiesThrowsAnException(
                 "This property doesn't exist: ${nonExistentProperty}",
-                "Can't get property nonExistentProperty from class " + TestBean.class.getCanonicalName(),
+                "nonExistentProperty", TestBean.class,
                 TemplateEngine.JSON_SERIALIZATION,
                 GetPropertyException.class);
     }
@@ -184,7 +202,7 @@ public class TemplateEngineTest {
     public void test_replacing_a_non_existent_property_with_TemplateEngine_STRING_SERIALIZATION_serialization_Type() {
         testReplacePropertiesThrowsAnException(
                 "This property doesn't exist: ${nonExistentProperty}",
-                "Can't get property nonExistentProperty from class " + TestBean.class.getCanonicalName(),
+                "nonExistentProperty", TestBean.class,
                 TemplateEngine.STRING_SERIALIZATION,
                 GetPropertyException.class);
     }

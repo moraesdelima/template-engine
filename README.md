@@ -42,10 +42,12 @@ You can use the `TemplateEngine` class to replace properties in a template eithe
 ```java
 @Data
 @AllArgsConstructor
-class MyBean {
+public class MyBean {
     private String name;
 }
+```
 
+```java
 TemplateEngine engine = new TemplateEngine();
 String template = "Hello, ${name}!";
 MyBean bean = new MyBean("John");
@@ -64,15 +66,20 @@ Note that the name property is replaced with your Json equivalent "John" (enclos
 ```java
 @Data
 @AllArgsConstructor
-class User {
+public class User {
     private String name;
 }
+```
+
+```java
 @Data
 @AllArgsConstructor
-class MyBean {
+public class MyBean {
     private User user;
 }
+```
 
+```java
 TemplateEngine engine = new TemplateEngine();
 String template = "{ \"user\": ${user} }";
 MyBean bean = new MyBean(new User("John"));
