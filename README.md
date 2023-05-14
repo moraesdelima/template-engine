@@ -1,9 +1,13 @@
 
 # Template Engine
 
-The Template Engine is a Java library designed to replace properties in a given template with their corresponding values from a Java Bean object, either in string or JSON format. This library provides a simple and easy-to-use solution for anyone who needs to create dynamic templates with variable values that can be changed at runtime. It is especially useful for developers who need to generate text or JSON documents with dynamic content, such as emails, reports, or web pages. By using the Template Engine, developers can save time and effort by automating the process of replacing values in templates and focus on the core functionality of their application.
+[![GitHub stars](https://img.shields.io/github/stars/moraesdelima/template-engine.svg?style=social)](https://github.com/moraesdelima/template-engine/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/moraesdelima/template-engine.svg?style=social)](https://github.com/moraesdelima/template-engine/network/members)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/moraesdelima/template-engine.svg?style=social)](https://github.com/moraesdelima/template-engine/pulls)
+[![GitHub issues](https://img.shields.io/github/issues/moraesdelima/template-engine.svg)](https://github.com/moraesdelima/template-engine/issues)
+[![GitHub license](https://img.shields.io/github/license/moraesdelima/template-engine.svg)](https://github.com/moraesdelima/template-engine/blob/main/LICENSE)
 
-Here's a table of contents in markdown for your document:
+The Template Engine is a Java library designed to replace properties in a given template with their corresponding values from a Java Bean object, either in string or JSON format. This library provides a simple and easy-to-use solution for anyone who needs to create dynamic templates with variable values that can be changed at runtime. It is especially useful for developers who need to generate text or JSON documents with dynamic content, such as emails, reports, or web pages. By using the Template Engine, developers can save time and effort by automating the process of replacing values in templates and focus on the core functionality of their application.
 
 ## Table of Contents
 
@@ -21,7 +25,6 @@ Here's a table of contents in markdown for your document:
   - [Submitting Feature Requests](#submitting-feature-requests)
   - [Contributing Code Changes](#contributing-code-changes)
   - [License](#license)
-  - [Authors](#authors)
 
 ## Usage
 
@@ -98,11 +101,6 @@ The `engine.process(String, Object)` and `engine.process(String, Object, int)` m
 - `GetPropertyException`: if the value of a property cannot be obtained from the Java Bean object
 - `SerializePropertyException`: if an error occurs during serialization of a property value
 
-Both exceptions have two informative methods:
-
-- `getProperty()`: returns the Java Bean property that caused the error
-- `getBeanClass()`: returns the Java Bean object where the error occurred
-
 To handle these exceptions, you can use a try-catch block as follows:
 
 ```java
@@ -115,6 +113,11 @@ try {
     System.err.println("Bean class: " + ex.getBeanClass().getSimpleName());
 }
 ```
+
+Both exceptions, `GetPropertyException` and `SerializePropertyException` have two informative methods:
+
+- `getProperty()`: returns the Java Bean property that caused the error
+- `getBeanClass()`: returns the Java Bean object where the error occurred
 
 ### Building from Source
 
@@ -192,7 +195,3 @@ Thank you for considering contributing to the project!
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Authors
-
-This project was created by Luiz Moraes de Lima Neto. You can contact me at <moraesdelima@gmail.com>.
