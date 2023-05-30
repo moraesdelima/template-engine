@@ -11,8 +11,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import lombok.Data;
-
 public class TemplateEngineTest {
 
     private Cliente cliente;
@@ -190,6 +188,16 @@ public class TemplateEngineTest {
     }
 
     @Test
+    public void test_replacing_a_property_with_a_null_parent_with_TemplateEngine_JSON_SERIALIZATION_serialization_Type() {
+        testBean.setCliente(null);
+        testReplacePropertiesThrowsAnException(
+                "O registro do cliente é ${registro}, o nome do cliente é ${cliente.nome}, a idade é ${cliente.idade} e o endereco é Rua ${cliente.endereco.rua}, ${cliente.endereco.numero}.",
+                "nome", Cliente.class,
+                TemplateEngine.JSON_SERIALIZATION,
+                GetPropertyException.class);
+    }
+
+    @Test
     public void test_replacing_a_non_existent_property_with_TemplateEngine_JSON_SERIALIZATION_serialization_Type() {
         testReplacePropertiesThrowsAnException(
                 "This property doesn't exist: ${nonExistentProperty}",
@@ -205,26 +213,6 @@ public class TemplateEngineTest {
                 "nonExistentProperty", TestBean.class,
                 TemplateEngine.STRING_SERIALIZATION,
                 GetPropertyException.class);
-    }
-
-    @Data
-    static class Endereco {
-        private String rua;
-        private int numero;
-    }
-
-    @Data
-    static class Cliente {
-        private String nome;
-        private int idade;
-        private Endereco endereco;
-    }
-
-    @Data
-    static class TestBean {
-        private String registro;
-        private Cliente cliente;
-        private List<String> lista;
     }
 
 }
