@@ -128,43 +128,37 @@ public class TemplateEngine {
             throws GetPropertyException {
 
         Object value = bean;
-        String[] parts = name.split("\\.");
-        for (String parte : parts) {
+        Class<?> beanClass = bean.getClass();
+        String[] nestedProperties = name.split("\\.");
+
+        for (String property : nestedProperties) {
+
+            if (value == null) {
+                throw new GetPropertyException(property, beanClass);
+            }
 
             PropertyDescriptor pd;
             try {
-                pd = new PropertyDescriptor(parte, value.getClass());
+                pd = new PropertyDescriptor(property, beanClass);
             } catch (IntrospectionException e) {
-                throw new GetPropertyException(parte, value.getClass(), e);
+                throw new GetPropertyException(property, beanClass, e);
             }
 
             Method getter = pd.getReadMethod();
             if (getter == null) {
-                throw new GetPropertyException(parte, value.getClass());
+                throw new GetPropertyException(property, beanClass);
             }
 
             try {
                 value = getter.invoke(value);
             } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new GetPropertyException(parte, value.getClass(), e);
+                throw new GetPropertyException(property, value.getClass(), e);
             }
+
+            beanClass = getter.getReturnType();
         }
 
         return value;
-    }
-
-    public static void main(String[] args) throws GetPropertyException, SerializePropertyException {
-        @Data
-        @AllArgsConstructor
-        class MyBean {
-            private String name;
-        }
-
-        TemplateEngine engine = new TemplateEngine();
-        String template = "Hello, ${name}!";
-        MyBean bean = new MyBean("John");
-        String result = engine.process(template, bean, JSON_SERIALIZATION);
-        System.out.println(result);
     }
 
 }
