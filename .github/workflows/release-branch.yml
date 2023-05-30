@@ -16,6 +16,45 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+    
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        ref: develop
+        
+    - name: Set up Java
+      uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+        
+    - name: Update Pom.xml Version
+      run: |
+        # Obtém a versão atual do pom.xml
+        CURRENT_VERSION=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='version']/text()" pom.xml)
+        echo "Current version: $CURRENT_VERSION"
+
+        # Remove o sufixo -SNAPSHOT da versão atual
+        NEW_VERSION=$(echo $CURRENT_VERSION | sed 's/-SNAPSHOT//')
+        echo "New version: $NEW_VERSION"
+
+        # Remove a parte do número de versão menor (minor version) da nova versão
+        NEW_VERSION_WITHOUT_MINOR=$(echo $NEW_VERSION | awk -F '.' '{print $1}')
+        echo "New version without minor: $NEW_VERSION_WITHOUT_MINOR"
+
+        # Cria a nova branch para o release
+        git checkout -b release/$NEW_VERSION_WITHOUT_MINOR
+
+        # Atualiza o arquivo pom.xml com a nova versão
+        mvn versions:set -DnewVersion=$NEW_VERSION
+
+        # Commit as mudanças no pom.xml
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git commit -a -m "Update pom.xml to $NEW_VERSION [skip ci]"
+
+        # Push das mudanças para a branch do release
+        git push origin release/$NEW_VERSION_WITHOUT_MINOR
+    
     # Runs a single command using the runners shell
     - name: Create a release
       run: echo "Hello World"
