@@ -53,7 +53,7 @@ jobs:
         mvn versions:set -DnewVersion=$NEW_VERSION
 
         # Substitui $CURRENT_VERSION por $NEW_VERSION no arquivo readme.md
-        sed -i "s/\$CURRENT_VERSION/$NEW_VERSION/g" README.md
+        sed -i "s/$CURRENT_VERSION/$NEW_VERSION/g" README.md
 
         # Commit as mudanças no pom.xml
         git config user.name "GitHub Actions"
