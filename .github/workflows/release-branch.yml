@@ -42,15 +42,18 @@ jobs:
         NEW_VERSION=$(echo $CURRENT_VERSION | sed 's/-SNAPSHOT//')
         echo "New version: $NEW_VERSION"
 
-        # Remove a parte do número de versão menor (minor version) da nova versão
-        NEW_VERSION_WITHOUT_MINOR=$(echo $NEW_VERSION | awk -F '.' '{print $1}')
-        echo "New version without minor: $NEW_VERSION_WITHOUT_MINOR"
+        # Remove a patch do número de versão (patch version) da nova versão        
+        PATCHLESS_VERSION=$(echo "$NEW_VERSION" | awk -F '.' '{print $1"."$2}')
+        echo "New version without mpatchinor: $PATCHLESS_VERSION"
 
         # Cria a nova branch para o release
-        git checkout -b release/$NEW_VERSION_WITHOUT_MINOR
+        git checkout -b release/$PATCHLESS_VERSION
 
         # Atualiza o arquivo pom.xml com a nova versão
         mvn versions:set -DnewVersion=$NEW_VERSION
+
+        # Substitui $CURRENT_VERSION por $NEW_VERSION no arquivo readme.md
+        sed -i "s/\$CURRENT_VERSION/$NEW_VERSION/g" README.md
 
         # Commit as mudanças no pom.xml
         git config user.name "GitHub Actions"
@@ -58,7 +61,7 @@ jobs:
         git commit -a -m "Update pom.xml to $NEW_VERSION [skip ci]"
 
         # Push das mudanças para a branch do release
-        git push origin release/$NEW_VERSION_WITHOUT_MINOR
+        git push origin release/$PATCHLESS_VERSION
     
     # Runs a single command using the runners shell
     - name: Create a release
