@@ -6,6 +6,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
@@ -190,11 +191,32 @@ public class TemplateEngineTest {
     @Test
     public void test_replacing_a_property_with_a_null_parent_with_TemplateEngine_JSON_SERIALIZATION_serialization_Type() {
         testBean.setCliente(null);
-        testReplacePropertiesThrowsAnException(
+        testReplaceProperties(
                 "O registro do cliente é ${registro}, o nome do cliente é ${cliente.nome}, a idade é ${cliente.idade} e o endereco é Rua ${cliente.endereco.rua}, ${cliente.endereco.numero}.",
-                "nome", Cliente.class,
-                TemplateEngine.JSON_SERIALIZATION,
-                GetPropertyException.class);
+                "O registro do cliente é \"123456\", o nome do cliente é null, a idade é null e o endereco é Rua null, null.",
+                TemplateEngine.JSON_SERIALIZATION);
+    }
+
+    @Test
+    public void test_replacing_a_property_with_a_null_parent_with_TemplateEngine_STRING_SERIALIZATION_serialization_Type() {
+        testBean.setCliente(null);
+        testReplaceProperties(
+                "${cliente.nome}",
+                "null",
+                TemplateEngine.STRING_SERIALIZATION);
+    }
+
+    @Test
+    public void test_replacing_a_deep_path_with_null_intermediate_segment() {
+        testBean.getCliente().setEndereco(null);
+        testReplaceProperties(
+                "${cliente.endereco.rua}",
+                "null",
+                TemplateEngine.STRING_SERIALIZATION);
+        testReplaceProperties(
+                "${cliente.endereco.rua}",
+                "null",
+                TemplateEngine.JSON_SERIALIZATION);
     }
 
     @Test
@@ -213,6 +235,99 @@ public class TemplateEngineTest {
                 "nonExistentProperty", TestBean.class,
                 TemplateEngine.STRING_SERIALIZATION,
                 GetPropertyException.class);
+    }
+
+    // --- Map navigation tests ---
+
+    @Test
+    public void test_map_simple_string_value_with_STRING_SERIALIZATION() {
+        MapBean mapBean = new MapBean();
+        mapBean.setDados(Map.of("nome", "João"));
+        testBean.setMapBean(mapBean);
+        try {
+            String result = engine.process("${mapBean.dados.nome}", testBean, TemplateEngine.STRING_SERIALIZATION);
+            assertEquals("João", result);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void test_map_nested_map_value_with_STRING_SERIALIZATION() {
+        MapBean mapBean = new MapBean();
+        mapBean.setDados(Map.of("cbo", Map.of("codigo", "1234")));
+        testBean.setMapBean(mapBean);
+        try {
+            String result = engine.process("${mapBean.dados.cbo.codigo}", testBean, TemplateEngine.STRING_SERIALIZATION);
+            assertEquals("1234", result);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void test_bean_to_map_to_string_navigation() {
+        MapBean mapBean = new MapBean();
+        mapBean.setDados(Map.of("nome", "João"));
+        testBean.setMapBean(mapBean);
+        try {
+            String result = engine.process("${mapBean.dados.nome}", testBean, TemplateEngine.STRING_SERIALIZATION);
+            assertEquals("João", result);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void test_map_to_bean_to_string_navigation() {
+        MapBean mapBean = new MapBean();
+        mapBean.setDados(Map.of("cliente", cliente));
+        testBean.setMapBean(mapBean);
+        try {
+            String result = engine.process("${mapBean.dados.cliente.nome}", testBean, TemplateEngine.STRING_SERIALIZATION);
+            assertEquals("João", result);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void test_map_missing_key_returns_null_string() {
+        MapBean mapBean = new MapBean();
+        mapBean.setDados(Map.of("nome", "João"));
+        testBean.setMapBean(mapBean);
+        try {
+            String result = engine.process("${mapBean.dados.inexistente}", testBean, TemplateEngine.STRING_SERIALIZATION);
+            assertEquals("null", result);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void test_null_map_in_intermediate_position_returns_null_string() {
+        MapBean mapBean = new MapBean();
+        mapBean.setDados(null);
+        testBean.setMapBean(mapBean);
+        try {
+            String result = engine.process("${mapBean.dados.cbo.codigo}", testBean, TemplateEngine.STRING_SERIALIZATION);
+            assertEquals("null", result);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void test_map_string_value_with_JSON_SERIALIZATION() {
+        MapBean mapBean = new MapBean();
+        mapBean.setDados(Map.of("nome", "João"));
+        testBean.setMapBean(mapBean);
+        try {
+            String result = engine.process("${mapBean.dados.nome}", testBean, TemplateEngine.JSON_SERIALIZATION);
+            assertEquals("\"João\"", result);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
     }
 
 }
