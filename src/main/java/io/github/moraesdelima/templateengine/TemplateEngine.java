@@ -4,6 +4,7 @@ import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -134,7 +135,13 @@ public class TemplateEngine {
         for (String property : nestedProperties) {
 
             if (value == null) {
-                throw new GetPropertyException(property, beanClass);
+                return null;
+            }
+
+            if (value instanceof Map) {
+                value = ((Map<?, ?>) value).get(property);
+                beanClass = value != null ? value.getClass() : Object.class;
+                continue;
             }
 
             PropertyDescriptor pd;
