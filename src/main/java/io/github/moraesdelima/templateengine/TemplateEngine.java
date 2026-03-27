@@ -146,7 +146,8 @@ public class TemplateEngine {
 
             PropertyDescriptor pd;
             try {
-                pd = new PropertyDescriptor(property, beanClass);
+                String getterName = "get" + Character.toUpperCase(property.charAt(0)) + property.substring(1);
+                pd = new PropertyDescriptor(property, beanClass, getterName, null);
             } catch (IntrospectionException e) {
                 throw new GetPropertyException(property, beanClass, e);
             }
