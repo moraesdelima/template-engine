@@ -9,4 +9,5 @@ public class TestBean {
     private String registro;
     private Cliente cliente;
     private List<String> lista;
+    private MapBean mapBean;
 }
