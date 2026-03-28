@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,6 +31,7 @@ public class TemplateEngine {
 
     public static final int STRING_SERIALIZATION = 0;
     public static final int JSON_SERIALIZATION = 1;
+    private final Map<String, CustomFormatter> formatters = new HashMap<>();
     Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDate.class,
                     (JsonSerializer<LocalDate>) (src, type, ctx) -> new JsonPrimitive(src.toString()))
@@ -40,40 +42,81 @@ public class TemplateEngine {
             .create();
 
     public String process(String template, Object bean)
-            throws GetPropertyException, SerializePropertyException {
+            throws GetPropertyException, SerializePropertyException, FormatterNotFoundException {
         return process(template, bean, STRING_SERIALIZATION);
+    }
+
+    /**
+     * Registers a custom formatter under the given name.
+     * The formatter can be referenced in templates using the syntax {@code ${path|name}}.
+     *
+     * @param name      the formatter identifier (must not be null or empty)
+     * @param formatter the formatter implementation (must not be null)
+     * @throws IllegalArgumentException if name is null/empty or formatter is null
+     */
+    public void registerFormatter(String name, CustomFormatter formatter) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("formatter name must not be null or empty");
+        }
+        if (formatter == null) {
+            throw new IllegalArgumentException("formatter must not be null");
+        }
+        formatters.put(name, formatter);
     }
 
     /**
      * Replaces all properties in the given template with their respective values
      * from the given Java Bean object.
-     * 
+     *
      * @param template          the template with properties to be replaced
      * @param bean              the Java Bean object containing the property values
      * @param serializationType the type of serialization to be used for the
      *                          property values (either STRING_SERIALIZATION or
      *                          JSON_SERIALIZATION)
-     * @return the template with all properties replaced with their respective
-     *         values
-     * @throws GetPropertyException       if the value of a property cannot be
-     *                                    obtained from the Java Bean object
-     * @throws SerializePropertyException if an error occurs during serialization of
-     *                                    a property value
+     * @return the template with all properties replaced with their respective values
+     * @throws GetPropertyException       if the value of a property cannot be obtained
+     * @throws SerializePropertyException if an error occurs during serialization
      */
     public String process(
             String template, Object bean, int serializationType)
-            throws GetPropertyException, SerializePropertyException {
-        Pattern pattern = Pattern.compile("\\$\\{([^}]+)\\}");
+            throws GetPropertyException, SerializePropertyException, FormatterNotFoundException {
+        Pattern pattern = Pattern.compile("\\$\\{([^|{}]+)(?:\\|([^}]+))?\\}");
         Matcher matcher = pattern.matcher(template);
         StringBuffer result = new StringBuffer();
         while (matcher.find()) {
             String property = matcher.group(1);
-            String replacement = serializeProperty(bean, property, serializationType);
+            String formatterName = matcher.group(2);
+            String replacement;
+            if (formatterName != null) {
+                CustomFormatter formatter = formatters.get(formatterName);
+                if (formatter == null) {
+                    throw new FormatterNotFoundException(formatterName);
+                }
+                Object resolvedValue = getPropertyValue(bean, property);
+                replacement = applyFormatter(formatter, property, resolvedValue, bean.getClass());
+            } else {
+                replacement = serializeProperty(bean, property, serializationType);
+            }
             matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
-
         }
         matcher.appendTail(result);
         return result.toString();
+    }
+
+    /**
+     * Applies a registered formatter to a resolved property value.
+     */
+    private String applyFormatter(CustomFormatter formatter, String property,
+            Object resolvedValue, Class<?> beanClass)
+            throws SerializePropertyException {
+        try {
+            String result = formatter.format(property, resolvedValue);
+            return result == null ? "null" : result;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SerializePropertyException(property, beanClass, e);
+        }
     }
 
     /**
@@ -160,7 +203,13 @@ public class TemplateEngine {
             PropertyDescriptor pd;
             try {
                 String getterName = "get" + Character.toUpperCase(property.charAt(0)) + property.substring(1);
-                pd = new PropertyDescriptor(property, beanClass, getterName, null);
+                try {
+                    pd = new PropertyDescriptor(property, beanClass, getterName, null);
+                } catch (IntrospectionException e) {
+                    // fallback para boolean: isXxx()
+                    String isGetterName = "is" + Character.toUpperCase(property.charAt(0)) + property.substring(1);
+                    pd = new PropertyDescriptor(property, beanClass, isGetterName, null);
+                }
             } catch (IntrospectionException e) {
                 throw new GetPropertyException(property, beanClass, e);
             }
