@@ -7,6 +7,8 @@ import static org.junit.Assert.fail;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -141,7 +143,7 @@ public class TemplateEngineTest {
     public void test_replacing_an_object_property_with_TemplateEngine_JSON_SERIALIZATION_serialization_Type() {
         testReplaceProperties(
                 "{ \"cliente\": ${cliente} }",
-                "{ \"cliente\": {\"nome\":\"João\",\"idade\":32,\"endereco\":{\"rua\":\"Silveira Martins\",\"numero\":30}} }",
+                "{ \"cliente\": {\"nome\":\"João\",\"idade\":32,\"ativo\":false,\"endereco\":{\"rua\":\"Silveira Martins\",\"numero\":30}} }",
                 TemplateEngine.JSON_SERIALIZATION);
     }
 
@@ -395,6 +397,194 @@ public class TemplateEngineTest {
                 "DataHora: ${dataHoraLocal}",
                 "DataHora: \"2024-03-27T10:30\"",
                 TemplateEngine.JSON_SERIALIZATION);
+    }
+
+    // --- registerFormatter tests ---
+
+    @Test
+    public void test_registerFormatter_simple() {
+        engine.registerFormatter("upper", (p, v) -> v != null ? v.toString().toUpperCase() : "null");
+        testReplaceProperties("${registro|upper}", "123456", TemplateEngine.STRING_SERIALIZATION);
+    }
+
+    @Test
+    public void test_registerFormatter_replaces_existing() {
+        engine.registerFormatter("fmt", (p, v) -> "first");
+        engine.registerFormatter("fmt", (p, v) -> "second");
+        testReplaceProperties("${registro|fmt}", "second", TemplateEngine.STRING_SERIALIZATION);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void test_registerFormatter_null_name_throws() {
+        engine.registerFormatter(null, (p, v) -> "x");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void test_registerFormatter_empty_name_throws() {
+        engine.registerFormatter("", (p, v) -> "x");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void test_registerFormatter_null_formatter_throws() {
+        engine.registerFormatter("fmt", null);
+    }
+
+    // --- formatter dispatch tests ---
+
+    @Test
+    public void test_formatter_applied_to_placeholder() throws Exception {
+        engine.registerFormatter("upper", (p, v) -> v.toString().toUpperCase());
+        String result = engine.process("Nome: ${cliente.nome|upper}", testBean, TemplateEngine.STRING_SERIALIZATION);
+        assertEquals("Nome: JOÃO", result);
+    }
+
+    @Test
+    public void test_multiple_formatters_in_template() throws Exception {
+        engine.registerFormatter("upper", (p, v) -> v.toString().toUpperCase());
+        engine.registerFormatter("stars", (p, v) -> "***" + v + "***");
+        String result = engine.process("${cliente.nome|upper} ${registro|stars}", testBean, TemplateEngine.STRING_SERIALIZATION);
+        assertEquals("JOÃO ***123456***", result);
+    }
+
+    @Test
+    public void test_mixed_placeholder_with_and_without_formatter() throws Exception {
+        engine.registerFormatter("upper", (p, v) -> v.toString().toUpperCase());
+        String result = engine.process("${registro} ${cliente.nome|upper}", testBean, TemplateEngine.STRING_SERIALIZATION);
+        assertEquals("123456 JOÃO", result);
+    }
+
+    @Test
+    public void test_formatter_returning_null_inserts_null_string() throws Exception {
+        engine.registerFormatter("nullfmt", (p, v) -> null);
+        String result = engine.process("${registro|nullfmt}", testBean, TemplateEngine.STRING_SERIALIZATION);
+        assertEquals("null", result);
+    }
+
+    @Test
+    public void test_formatter_returning_empty_string() throws Exception {
+        engine.registerFormatter("empty", (p, v) -> "");
+        String result = engine.process("${registro|empty}", testBean, TemplateEngine.STRING_SERIALIZATION);
+        assertEquals("", result);
+    }
+
+    @Test(expected = FormatterNotFoundException.class)
+    public void test_unregistered_formatter_throws_FormatterNotFoundException() throws Exception {
+        engine.process("${registro|naoExiste}", testBean, TemplateEngine.STRING_SERIALIZATION);
+    }
+
+    @Test
+    public void test_runtime_exception_propagated_from_formatter() {
+        engine.registerFormatter("boom", (p, v) -> { throw new RuntimeException("boom!"); });
+        try {
+            engine.process("${registro|boom}", testBean, TemplateEngine.STRING_SERIALIZATION);
+            fail("Expected RuntimeException");
+        } catch (RuntimeException e) {
+            assertEquals("boom!", e.getMessage());
+        } catch (Exception e) {
+            fail("Expected RuntimeException, got: " + e.getClass());
+        }
+    }
+
+    @Test
+    public void test_checked_exception_wrapped_in_SerializePropertyException() {
+        engine.registerFormatter("checked", (p, v) -> { throw new Exception("checked!"); });
+        try {
+            engine.process("${registro|checked}", testBean, TemplateEngine.STRING_SERIALIZATION);
+            fail("Expected SerializePropertyException");
+        } catch (SerializePropertyException e) {
+            assertEquals("checked!", e.getCause().getMessage());
+        } catch (Exception e) {
+            fail("Expected SerializePropertyException, got: " + e.getClass());
+        }
+    }
+
+    // --- date formatting tests ---
+
+    @Test
+    public void test_formatter_LocalDate_to_yyyymmdd() throws Exception {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
+        engine.registerFormatter("yyyymmdd", (p, v) -> v != null ? ((LocalDate) v).format(fmt) : "null");
+        testBean.setDataLocal(LocalDate.of(2024, 3, 27));
+        String result = engine.process("${dataLocal|yyyymmdd}", testBean, TemplateEngine.STRING_SERIALIZATION);
+        assertEquals("20240327", result);
+    }
+
+    @Test
+    public void test_formatter_reformat_string_date_ddmmyyyy_to_yyyymmdd() throws Exception {
+        DateTimeFormatter input = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter output = DateTimeFormatter.ofPattern("yyyyMMdd");
+        engine.registerFormatter("reformat", (p, v) -> {
+            if (v == null) return "null";
+            return LocalDate.parse(v.toString(), input).format(output);
+        });
+        testBean.setRegistro("27/03/2024");
+        String result = engine.process("${registro|reformat}", testBean, TemplateEngine.STRING_SERIALIZATION);
+        assertEquals("20240327", result);
+    }
+
+    // --- coverage gap tests ---
+
+    @Test
+    public void test_LocalTime_property_with_STRING_SERIALIZATION() {
+        testBean.setHoraLocal(LocalTime.of(10, 30, 0));
+        testReplaceProperties("Hora: ${horaLocal}", "Hora: 10:30", TemplateEngine.STRING_SERIALIZATION);
+    }
+
+    @Test
+    public void test_LocalTime_property_with_JSON_SERIALIZATION() {
+        testBean.setHoraLocal(LocalTime.of(10, 30, 0));
+        testReplaceProperties("Hora: ${horaLocal}", "Hora: \"10:30\"", TemplateEngine.JSON_SERIALIZATION);
+    }
+
+    @Test
+    public void test_boolean_property_with_STRING_SERIALIZATION() {
+        cliente.setAtivo(true);
+        testReplaceProperties("Ativo: ${cliente.ativo}", "Ativo: true", TemplateEngine.STRING_SERIALIZATION);
+    }
+
+    @Test
+    public void test_boolean_property_with_JSON_SERIALIZATION() {
+        cliente.setAtivo(true);
+        testReplaceProperties("Ativo: ${cliente.ativo}", "Ativo: true", TemplateEngine.JSON_SERIALIZATION);
+    }
+
+    @Test
+    public void test_map_integer_value_with_STRING_SERIALIZATION() {
+        MapBean mapBean = new MapBean();
+        mapBean.setDados(Map.of("score", 42));
+        testBean.setMapBean(mapBean);
+        try {
+            String result = engine.process("${mapBean.dados.score}", testBean, TemplateEngine.STRING_SERIALIZATION);
+            assertEquals("42", result);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void test_map_integer_value_with_JSON_SERIALIZATION() {
+        MapBean mapBean = new MapBean();
+        mapBean.setDados(Map.of("score", 42));
+        testBean.setMapBean(mapBean);
+        try {
+            String result = engine.process("${mapBean.dados.score}", testBean, TemplateEngine.JSON_SERIALIZATION);
+            assertEquals("42", result);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void test_map_boolean_value_with_STRING_SERIALIZATION() {
+        MapBean mapBean = new MapBean();
+        mapBean.setDados(Map.of("ativo", true));
+        testBean.setMapBean(mapBean);
+        try {
+            String result = engine.process("${mapBean.dados.ativo}", testBean, TemplateEngine.STRING_SERIALIZATION);
+            assertEquals("true", result);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
     }
 
 }

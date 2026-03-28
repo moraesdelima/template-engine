@@ -2,6 +2,7 @@ package io.github.moraesdelima.templateengine;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import lombok.Data;
@@ -14,6 +15,7 @@ public class TestBean {
     private MapBean mapBean;
     private LocalDate dataLocal;
     private LocalDateTime dataHoraLocal;
+    private LocalTime horaLocal;
 
     // getter-only virtual property (no backing field, no setter)
     public String getRegistroFormatado() {
