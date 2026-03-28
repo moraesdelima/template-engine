@@ -5,6 +5,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -328,6 +330,71 @@ public class TemplateEngineTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
+    }
+
+    // --- Getter-only virtual property tests ---
+
+    @Test
+    public void test_getter_only_property_with_STRING_SERIALIZATION() {
+        testReplaceProperties(
+                "Registro formatado: ${registroFormatado}",
+                "Registro formatado: REG-123456",
+                TemplateEngine.STRING_SERIALIZATION);
+    }
+
+    @Test
+    public void test_getter_only_property_with_JSON_SERIALIZATION() {
+        testReplaceProperties(
+                "Registro formatado: ${registroFormatado}",
+                "Registro formatado: \"REG-123456\"",
+                TemplateEngine.JSON_SERIALIZATION);
+    }
+
+    @Test
+    public void test_getter_only_property_null_value_with_STRING_SERIALIZATION() {
+        testBean.setRegistro(null);
+        testReplaceProperties(
+                "${registroFormatado}",
+                "null",
+                TemplateEngine.STRING_SERIALIZATION);
+    }
+
+    // --- java.time type tests ---
+
+    @Test
+    public void test_LocalDate_property_with_STRING_SERIALIZATION() {
+        testBean.setDataLocal(LocalDate.of(2024, 3, 27));
+        testReplaceProperties(
+                "Data: ${dataLocal}",
+                "Data: 2024-03-27",
+                TemplateEngine.STRING_SERIALIZATION);
+    }
+
+    @Test
+    public void test_LocalDate_property_with_JSON_SERIALIZATION() {
+        testBean.setDataLocal(LocalDate.of(2024, 3, 27));
+        testReplaceProperties(
+                "Data: ${dataLocal}",
+                "Data: \"2024-03-27\"",
+                TemplateEngine.JSON_SERIALIZATION);
+    }
+
+    @Test
+    public void test_LocalDateTime_property_with_STRING_SERIALIZATION() {
+        testBean.setDataHoraLocal(LocalDateTime.of(2024, 3, 27, 10, 30, 0));
+        testReplaceProperties(
+                "DataHora: ${dataHoraLocal}",
+                "DataHora: 2024-03-27T10:30",
+                TemplateEngine.STRING_SERIALIZATION);
+    }
+
+    @Test
+    public void test_LocalDateTime_property_with_JSON_SERIALIZATION() {
+        testBean.setDataHoraLocal(LocalDateTime.of(2024, 3, 27, 10, 30, 0));
+        testReplaceProperties(
+                "DataHora: ${dataHoraLocal}",
+                "DataHora: \"2024-03-27T10:30\"",
+                TemplateEngine.JSON_SERIALIZATION);
     }
 
 }
