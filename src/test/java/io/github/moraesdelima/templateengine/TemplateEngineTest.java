@@ -587,4 +587,54 @@ public class TemplateEngineTest {
         }
     }
 
+    // --- additional formatter coverage ---
+
+    @Test
+    public void test_formatter_receives_null_resolved_value() throws Exception {
+        engine.registerFormatter("safe", (p, v) -> v == null ? "N/A" : v.toString());
+        testBean.setRegistro(null);
+        String result = engine.process("${registro|safe}", testBean, TemplateEngine.STRING_SERIALIZATION);
+        assertEquals("N/A", result);
+    }
+
+    @Test
+    public void test_formatter_receives_correct_nested_property_name() throws Exception {
+        engine.registerFormatter("upper", (p, v) -> p + "=" + v.toString().toUpperCase());
+        String result = engine.process("${cliente.nome|upper}", testBean, TemplateEngine.STRING_SERIALIZATION);
+        assertEquals("cliente.nome=JOÃO", result);
+    }
+
+    @Test
+    public void test_FormatterNotFoundException_contains_formatter_name() {
+        try {
+            engine.process("${registro|naoExiste}", testBean, TemplateEngine.STRING_SERIALIZATION);
+            fail("Expected FormatterNotFoundException");
+        } catch (FormatterNotFoundException e) {
+            assertEquals("naoExiste", e.getFormatterName());
+        } catch (Exception e) {
+            fail("Expected FormatterNotFoundException, got: " + e.getClass());
+        }
+    }
+
+    @Test
+    public void test_nonexistent_path_with_formatter_throws_GetPropertyException() {
+        engine.registerFormatter("upper", (p, v) -> v.toString().toUpperCase());
+        try {
+            engine.process("${campoInexistente|upper}", testBean, TemplateEngine.STRING_SERIALIZATION);
+            fail("Expected GetPropertyException");
+        } catch (GetPropertyException e) {
+            assertEquals("campoInexistente", e.getProperty());
+        } catch (Exception e) {
+            fail("Expected GetPropertyException, got: " + e.getClass());
+        }
+    }
+
+    @Test
+    public void test_formatter_with_JSON_SERIALIZATION_bypasses_gson() throws Exception {
+        engine.registerFormatter("upper", (p, v) -> v.toString().toUpperCase());
+        String result = engine.process("${cliente.nome|upper}", testBean, TemplateEngine.JSON_SERIALIZATION);
+        // formatter bypasses Gson — no quotes added
+        assertEquals("JOÃO", result);
+    }
+
 }
