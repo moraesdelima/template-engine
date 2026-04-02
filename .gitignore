@@ -319,3 +319,6 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/java,linux,macos,eclipse,windows,intellij,visualstudiocode,maven
+
+# Nexus deploy credentials (never commit this file)
+.nexus-credentials
