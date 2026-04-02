@@ -7,7 +7,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/moraesdelima/template-engine.svg)](https://github.com/moraesdelima/template-engine/issues)
 [![GitHub license](https://img.shields.io/github/license/moraesdelima/template-engine.svg)](https://github.com/moraesdelima/template-engine/blob/main/LICENSE)
 
-The Template Engine is a Java library designed to replace properties in a given template with their corresponding values from a Java Bean object, either in string or JSON format. This library provides a simple and easy-to-use solution for anyone who needs to create dynamic templates with variable values that can be changed at runtime. It is especially useful for developers who need to generate text or JSON documents with dynamic content, such as emails, reports, or web pages. By using the Template Engine, developers can save time and effort by automating the process of replacing values in templates and focus on the core functionality of their application.
+Template Engine é uma biblioteca Java para substituir placeholders em templates com valores vindos de Java Beans, Maps ou qualquer combinação dos dois. Suporta serialização em string ou JSON, navegação em propriedades aninhadas, tipos `java.time` e formatadores customizados.
 
 ## Table of Contents
 
@@ -16,182 +16,220 @@ The Template Engine is a Java library designed to replace properties in a given 
   - [Usage](#usage)
     - [Configuration](#configuration)
     - [Basic Usage](#basic-usage)
+    - [Nested Properties](#nested-properties)
+    - [Map Navigation](#map-navigation)
     - [JSON Serialization](#json-serialization)
+    - [java.time Support](#javatime-support)
+    - [Custom Formatters](#custom-formatters)
     - [Handling Exceptions](#handling-exceptions)
     - [Building from Source](#building-from-source)
-  - [Conclusion](#conclusion)
   - [Dependencies](#dependencies)
-  - [Reporting Bugs](#reporting-bugs)
-  - [Submitting Feature Requests](#submitting-feature-requests)
-  - [Contributing Code Changes](#contributing-code-changes)
+  - [Contributing](#contributing)
   - [License](#license)
 
 ## Usage
 
 ### Configuration
 
-To use the library, you first need to include the `template-engine` dependency in your project's build file. This can be done in Maven by adding the following to your `pom.xml` file:
+Adicione a dependência ao seu `pom.xml`:
 
 ```xml
 <dependency>
     <groupId>io.github.moraesdelima</groupId>
     <artifactId>template-engine</artifactId>
-    <version>1.2.0</version>
+    <version>1.4.1</version>
 </dependency>
 ```
 
 ### Basic Usage
 
-Once you have added the `template-engine` dependency to your project, you can use the `TemplateEngine` class to replace properties in a template. Here is an example of how to use it with a string serialization:
+Use `${propertyName}` para referenciar qualquer propriedade do bean:
 
 ```java
 TemplateEngine engine = new TemplateEngine();
 String template = "Hello, ${name}!";
 MyBean bean = new MyBean("John");
 String result = engine.process(template, bean);
-System.out.println(result);
+// Hello, John!
 ```
 
-This code will produce the following output:
+### Nested Properties
 
+Navegue em propriedades aninhadas com notação de ponto. Se qualquer segmento do caminho for `null`, o placeholder é substituído por `"null"` sem lançar exceção:
+
+```java
+String template = "Rua: ${cliente.endereco.rua}";
+String result = engine.process(template, bean);
+// Rua: Silveira Martins
 ```
-Hello, John!
+
+### Map Navigation
+
+O engine navega transparentemente dentro de `Map`s usando a mesma notação de ponto. Você pode misturar beans e maps no mesmo caminho:
+
+```java
+// Bean → Map → valor
+MapBean bean = new MapBean();
+bean.setDados(Map.of("nome", "João"));
+
+String result = engine.process("${dados.nome}", bean);
+// João
+
+// Bean → Map → Bean → valor
+bean.setDados(Map.of("cliente", clienteBean));
+String result = engine.process("${dados.cliente.nome}", bean);
+// João
 ```
+
+Chaves inexistentes no Map retornam `"null"` sem lançar exceção.
 
 ### JSON Serialization
 
-You can also use the `TemplateEngine` class to replace properties in a template using JSON serialization. Here is an example of how to use it:
+Passe `TemplateEngine.JSON_SERIALIZATION` para serializar os valores como JSON. Útil para montar payloads diretamente no template:
 
 ```java
-TemplateEngine engine = new TemplateEngine();
-String template = "Hello, ${name}!";
-MyBean bean = new MyBean("John");
-String result = engine.process(template, bean, JSON_SERIALIZATION);
-System.out.println(result);
+// Valor simples — string recebe aspas
+engine.process("${name}", bean, JSON_SERIALIZATION);
+// "John"
+
+// Objeto completo
+engine.process("{ \"user\": ${user} }", bean, JSON_SERIALIZATION);
+// { "user": {"name":"John","age":30} }
+
+// Array
+engine.process("{ \"tags\": ${tags} }", bean, JSON_SERIALIZATION);
+// { "tags": ["java","library"] }
 ```
 
-This code will produce the following output:
+> Tentar serializar um objeto ou array com `STRING_SERIALIZATION` lança `SerializePropertyException`. Use `JSON_SERIALIZATION` nesses casos.
 
-```
-Hello, "John"!
-```
+### java.time Support
 
-Note that in this case, the name property is replaced with its JSON equivalent `"John"` (enclosed in double quotes) and not with its string representation `John` (without double quotes).
-
-Another example of JSON Serialization could be that
+`LocalDate`, `LocalDateTime` e `LocalTime` são suportados nativamente, sem configuração extra:
 
 ```java
-TemplateEngine engine = new TemplateEngine();
-String template = "{ \"user\": ${user} }";
-MyBean bean = new MyBean(new User("John"));
-String result = engine.process(template, bean, JSON_SERIALIZATION);
-System.out.println(result);
+bean.setDataLocal(LocalDate.of(2024, 3, 27));
+engine.process("Data: ${dataLocal}", bean);
+// Data: 2024-03-27
+
+bean.setDataHoraLocal(LocalDateTime.of(2024, 3, 27, 10, 30, 0));
+engine.process("DataHora: ${dataHoraLocal}", bean);
+// DataHora: 2024-03-27T10:30
 ```
 
-The output of this code would be:
+Com `JSON_SERIALIZATION`, os valores são envolvidos em aspas: `"2024-03-27"`.
 
-```json
-{ "user": {"name":"John"} }
+### Custom Formatters
+
+Registre formatadores para controlar exatamente como um valor é exibido no template. Use a sintaxe `${path|formatterName}`:
+
+```java
+engine.registerFormatter("upper", (property, value) ->
+    value != null ? value.toString().toUpperCase() : "null"
+);
+
+engine.process("${cliente.nome|upper}", bean);
+// JOÃO
+```
+
+O formatador recebe dois argumentos:
+- `property` — o caminho completo do placeholder (ex: `"cliente.nome"`)
+- `value` — o valor resolvido via reflection; pode ser `null`
+
+Você pode registrar quantos formatadores precisar e usá-los no mesmo template:
+
+```java
+engine.registerFormatter("stars", (p, v) -> "***" + v + "***");
+
+engine.process("${cliente.nome|upper} ${registro|stars}", bean);
+// JOÃO ***123456***
+```
+
+Formatadores também funcionam com `JSON_SERIALIZATION` — nesse caso, o Gson é ignorado e o retorno do formatador é inserido diretamente, sem aspas adicionais.
+
+**Comportamentos importantes:**
+- Se o formatador retornar `null`, o engine insere a string literal `"null"`.
+- `RuntimeException` lançada pelo formatador é propagada diretamente.
+- Checked exceptions são encapsuladas em `SerializePropertyException`.
+- Referenciar um formatador não registrado lança `FormatterNotFoundException`.
+
+**Exemplo com data customizada:**
+
+```java
+DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
+engine.registerFormatter("yyyymmdd", (p, v) ->
+    v != null ? ((LocalDate) v).format(fmt) : "null"
+);
+
+bean.setDataLocal(LocalDate.of(2024, 3, 27));
+engine.process("${dataLocal|yyyymmdd}", bean);
+// 20240327
 ```
 
 ### Handling Exceptions
 
-The `engine.process(String, Object)` and `engine.process(String, Object, int)` methods can throw two types of exceptions:
+O método `process` pode lançar três tipos de exceção:
 
-- `GetPropertyException`: if the value of a property cannot be obtained from the Java Bean object
-- `SerializePropertyException`: if an error occurs during serialization of a property value
-
-To handle these exceptions, you can use a try-catch block as follows:
+- `GetPropertyException` — a propriedade não existe ou não pode ser lida do bean
+- `SerializePropertyException` — erro ao serializar o valor (ex: objeto com `STRING_SERIALIZATION`)
+- `FormatterNotFoundException` — o template referencia um formatador que não foi registrado
 
 ```java
 try {
     String result = engine.process(template, bean);
-    System.out.println(result);
-} catch (GetPropertyException | SerializePropertyException ex) {
-    System.err.println("Error processing template: " + ex.getMessage());
-    System.err.println("Property: " + ex.getProperty());
-    System.err.println("Bean class: " + ex.getBeanClass().getSimpleName());
+} catch (GetPropertyException e) {
+    System.err.println("Propriedade inválida: " + e.getProperty());
+    System.err.println("Classe: " + e.getBeanClass().getSimpleName());
+} catch (SerializePropertyException e) {
+    System.err.println("Erro de serialização: " + e.getProperty());
+} catch (FormatterNotFoundException e) {
+    System.err.println("Formatador não registrado: " + e.getFormatterName());
 }
 ```
 
-Both exceptions, `GetPropertyException` and `SerializePropertyException` have two informative methods:
+`GetPropertyException` e `SerializePropertyException` expõem:
+- `getProperty()` — o nome da propriedade que causou o erro
+- `getBeanClass()` — a classe do bean onde o erro ocorreu
 
-- `getProperty()`: returns the Java Bean property that caused the error
-- `getBeanClass()`: returns the Java Bean object where the error occurred
+`FormatterNotFoundException` expõe:
+- `getFormatterName()` — o nome do formatador referenciado no template
 
 ### Building from Source
 
-To build the `template-engine` project from source, you will need:
-
-- JDK 11 or later
+Requisitos:
+- JDK 11 ou superior
 - Apache Maven 3.x
-
-To build the project, run the following command from the project root directory:
 
 ```bash
 mvn package
 ```
 
-This will create a JAR file in the `target` directory.
-
-## Conclusion
-
-The `template-engine` library provides a convenient way to replace properties in a template with their respective values from a Java Bean object, either in string or JSON format. By following the instructions outlined in this document, you should be able to easily configure and use the library in your own projects.
+O JAR será gerado em `target/`.
 
 ## Dependencies
 
-The project uses the following dependencies:
+| Dependency | Version | Scope |
+|---|---|---|
+| org.projectlombok:lombok | 1.18.36 | provided |
+| com.google.code.gson:gson | 2.10.1 | compile |
+| junit:junit | 4.13.2 | test |
+| org.junit.jupiter:junit-jupiter-api | 5.7.2 | test |
+| org.mockito:mockito-core | 4.2.0 | test |
+| org.mockito:mockito-junit-jupiter | 4.2.0 | test |
 
-| Dependency | Version | Scope | Note |
-|-------------|--------|--------|------------|
-| org.projectlombok:lombok | 1.18.26 | provided | The dependency is used only during compilation and should not be included in the final package. |
-| com.google.code.gson:gson | 2.10.1 | compile | The dependency is used only to convert objects to JSON format and should be included in the final package. |
-| junit:junit | 4.13.2 | test | The dependency is used only during unit tests. |
-| org.junit.jupiter:junit-jupiter-api | 5.7.2 | test | The dependency is used only during unit tests. |
-| org.mockito:mockito-core | 4.2.0 | test | The dependency is used only during unit tests. |
-| org.mockito:mockito-junit-jupiter | 4.2.0 | test | The dependency is used only during unit tests. |
+## Contributing
 
-To contribute to the project, there are several ways you can get involved:
+**Reportando bugs:** Abra uma issue no repositório descrevendo o problema, mensagens de erro e passos para reproduzir.
 
-## Reporting Bugs
+**Sugerindo funcionalidades:** Abra uma issue descrevendo o caso de uso e o comportamento esperado.
 
-If you encounter any bugs or issues while using the project, you can report them by opening an issue on the project's GitHub repository. To do this, follow these steps:
+**Contribuindo com código:**
 
-1. Go to the project's GitHub repository.
-2. Click on the "Issues" tab.
-3. Click on the "New issue" button.
-4. Describe the bug or issue in detail and provide any relevant information, such as error messages or screenshots.
-5. Submit the issue.
-
-The project maintainers will review the issue and work on resolving it as soon as possible.
-
-## Submitting Feature Requests
-
-If you have an idea for a new feature or enhancement to the project, you can submit a feature request by opening an issue on the project's GitHub repository. To do this, follow these steps:
-
-1. Go to the project's GitHub repository.
-2. Click on the "Issues" tab.
-3. Click on the "New issue" button.
-4. Describe the feature or enhancement you would like to see added in detail.
-5. Submit the issue.
-
-The project maintainers will review the feature request and consider it for future development.
-
-## Contributing Code Changes
-
-If you would like to contribute code changes to the project, you can do so by forking the project's GitHub repository and submitting a pull request with your changes. To do this, follow these steps:
-
-1. Fork the project's GitHub repository.
-2. Clone the forked repository to your local machine.
-3. Make the necessary code changes.
-4. Test your changes to ensure they work as intended.
-5. Commit your changes and push them to your forked repository.
-6. Submit a pull request to the project's GitHub repository.
-
-The project maintainers will review your pull request and work with you to merge your changes into the main project codebase.
-
-Thank you for considering contributing to the project!
+1. Faça um fork do repositório
+2. Clone localmente e crie um branch para sua mudança
+3. Implemente e teste suas alterações
+4. Abra um pull request descrevendo o que foi feito
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+MIT License. Veja o arquivo [LICENSE](LICENSE) para detalhes.

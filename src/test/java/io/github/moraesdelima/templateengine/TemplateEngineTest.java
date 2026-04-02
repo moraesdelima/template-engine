@@ -630,11 +630,11 @@ public class TemplateEngineTest {
     }
 
     @Test
-    public void test_formatter_with_JSON_SERIALIZATION_bypasses_gson() throws Exception {
+    public void test_formatter_with_JSON_SERIALIZATION_applies_gson() throws Exception {
         engine.registerFormatter("upper", (p, v) -> v.toString().toUpperCase());
         String result = engine.process("${cliente.nome|upper}", testBean, TemplateEngine.JSON_SERIALIZATION);
-        // formatter bypasses Gson — no quotes added
-        assertEquals("JOÃO", result);
+        // formatter result is still serialized by Gson according to serializationType
+        assertEquals("\"JOÃO\"", result);
     }
 
 }

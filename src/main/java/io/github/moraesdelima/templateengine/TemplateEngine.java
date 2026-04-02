@@ -93,7 +93,10 @@ public class TemplateEngine {
                     throw new FormatterNotFoundException(formatterName);
                 }
                 Object resolvedValue = getPropertyValue(bean, property);
-                replacement = applyFormatter(formatter, property, resolvedValue, bean.getClass());
+                String formattedValue = applyFormatter(formatter, property, resolvedValue, bean.getClass());
+                replacement = serializationType == JSON_SERIALIZATION
+                        ? gson.toJson(formattedValue)
+                        : formattedValue;
             } else {
                 replacement = serializeProperty(bean, property, serializationType);
             }
